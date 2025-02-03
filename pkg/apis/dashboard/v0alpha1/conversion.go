@@ -33,3 +33,8 @@ func Convert_v0alpha1_Unstructured_To_dashboard_DashboardSpec(in *common.Unstruc
 	out.Title = t
 	return nil
 }
+
+// TODO (@radiohead): not quite sure why k8s codegen is not generating this conversion function.
+func Convert_v0alpha1_Dashboard_To_dashboard_Dashboard(in *Dashboard, out *dashboard.Dashboard, s conversion.Scope) error {
+	return autoConvert_v0alpha1_Dashboard_To_dashboard_Dashboard(in, out, s)
+}
