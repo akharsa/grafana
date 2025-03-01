@@ -294,6 +294,11 @@ type AlertRule struct {
 	IsPaused             bool
 	NotificationSettings []NotificationSettings
 	Metadata             AlertRuleMetadata
+	// MissingSeriesEvalsToResolve specifies the number of consecutive evaluation intervals
+	// required before resolving an alert state (a dimension) when data is missing.
+	// If nil, alerts resolve after 2 missing evaluation intervals
+	// (i.e., resolution occurs during the second evaluation where data is absent).
+	MissingSeriesEvalsToResolve *int
 }
 
 type AlertRuleMetadata struct {
@@ -660,6 +665,10 @@ func validateAlertRuleFields(rule *AlertRule) error {
 		return err
 	}
 
+	if rule.MissingSeriesEvalsToResolve != nil && *rule.MissingSeriesEvalsToResolve <= 0 {
+		return fmt.Errorf("%w: field `missing_series_evals_to_resolve` must be greater than 0", ErrAlertRuleFailedValidation)
+	}
+
 	return nil
 }
 
@@ -709,25 +718,26 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 		return nil
 	}
 	result := AlertRule{
-		ID:              alertRule.ID,
-		GUID:            alertRule.GUID,
-		OrgID:           alertRule.OrgID,
-		Title:           alertRule.Title,
-		Condition:       alertRule.Condition,
-		Updated:         alertRule.Updated,
-		UpdatedBy:       alertRule.UpdatedBy,
-		IntervalSeconds: alertRule.IntervalSeconds,
-		Version:         alertRule.Version,
-		UID:             alertRule.UID,
-		NamespaceUID:    alertRule.NamespaceUID,
-		RuleGroup:       alertRule.RuleGroup,
-		RuleGroupIndex:  alertRule.RuleGroupIndex,
-		NoDataState:     alertRule.NoDataState,
-		ExecErrState:    alertRule.ExecErrState,
-		For:             alertRule.For,
-		Record:          alertRule.Record,
-		IsPaused:        alertRule.IsPaused,
-		Metadata:        alertRule.Metadata,
+		ID:                          alertRule.ID,
+		GUID:                        alertRule.GUID,
+		OrgID:                       alertRule.OrgID,
+		Title:                       alertRule.Title,
+		Condition:                   alertRule.Condition,
+		Updated:                     alertRule.Updated,
+		UpdatedBy:                   alertRule.UpdatedBy,
+		IntervalSeconds:             alertRule.IntervalSeconds,
+		Version:                     alertRule.Version,
+		UID:                         alertRule.UID,
+		NamespaceUID:                alertRule.NamespaceUID,
+		RuleGroup:                   alertRule.RuleGroup,
+		RuleGroupIndex:              alertRule.RuleGroupIndex,
+		NoDataState:                 alertRule.NoDataState,
+		ExecErrState:                alertRule.ExecErrState,
+		For:                         alertRule.For,
+		Record:                      alertRule.Record,
+		IsPaused:                    alertRule.IsPaused,
+		Metadata:                    alertRule.Metadata,
+		MissingSeriesEvalsToResolve: alertRule.MissingSeriesEvalsToResolve,
 	}
 
 	if alertRule.DashboardUID != nil {
@@ -790,6 +800,7 @@ func ClearRecordingRuleIgnoredFields(rule *AlertRule) {
 	rule.Condition = ""
 	rule.For = 0
 	rule.NotificationSettings = nil
+	rule.MissingSeriesEvalsToResolve = nil
 }
 
 // GetAlertRuleByUIDQuery is the query for retrieving/deleting an alert rule by UID and organisation ID.
